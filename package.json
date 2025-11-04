@@ -5,7 +5,8 @@
   "scripts": {
     "test": "newman run notes-api-test.postman_collection.json --environment notes-api-test.postman_environment.json",
     "start": "nodemon ./src/server.js",
-    "frontend": "docker run --rm -p 8080:8080 dicodingacademy/notes-app-frontend:v1"
+    "frontend": "docker run --rm -p 8080:8080 dicodingacademy/notes-app-frontend:v1",
+    "migrate": "node-pg-migrate"
   },
   "keywords": [],
   "author": "",
@@ -19,7 +20,12 @@
   },
   "dependencies": {
     "@hapi/hapi": "^21.4.3",
+    "auto-bind": "^4.0.0",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.2.3",
     "joi": "^18.0.1",
-    "nanoid": "^3.3.11"
+    "nanoid": "^3.3.11",
+    "node-pg-migrate": "^8.0.3",
+    "pg": "^8.16.3"
   }
 }

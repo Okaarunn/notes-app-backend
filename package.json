@@ -5,7 +5,7 @@
   "scripts": {
     "test": "newman run notes-api-test.postman_collection.json --environment notes-api-test.postman_environment.json",
     "start": "nodemon ./src/server.js",
-    "frontend": "docker run --rm -p 8080:8080 dicodingacademy/notes-app-frontend:v1",
+    "frontend": "docker run --rm -p 8080:8080 dicodingacademy/notes-app-frontend:v2",
     "migrate": "node-pg-migrate"
   },
   "keywords": [],

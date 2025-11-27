@@ -8,24 +8,40 @@ const NotFoundError = require("../../exceptions/NotFoundError");
 const AuthorizationError = require("../../exceptions/AuthorizationError");
 
 class NotesService {
-  constructor(collaborationService) {
+  constructor(collaborationService, cacheService) {
     this._pool = new Pool();
     this._collaborationService = collaborationService;
+    this._cacheService = cacheService;
   }
 
   // get note
   async getNotes(owner) {
-    const query = {
-      text: `SELECT notes.* FROM notes
-    LEFT JOIN collaborations ON collaborations.note_id = notes.id
-    WHERE notes.owner = $1 OR collaborations.user_id = $1
-    GROUP BY notes.id`,
-      values: [owner],
-    };
+    try {
+      // get note in cache
+      const result = await this._cacheService.get(`notes:${owner}`);
 
-    const result = await this._pool.query(query);
+      return JSON.parse(result);
+    } catch (error) {
+      const query = {
+        text: `SELECT notes.* FROM notes
+        LEFT JOIN collaborations ON collaborations.note_id = notes.id
+        WHERE notes.owner = $1 OR collaborations.user_id = $1
+        GROUP BY notes.id`,
+        values: [owner],
+      };
 
-    return result.rows.map(mapDBToModel);
+      const result = await this._pool.query(query);
+      const mappedResult = result.rows.map(mapDBToModel);
+
+      // notes will be save in cache before function get notes get return
+
+      await this._cacheService.set(
+        `notes:${owner}`,
+        JSON.stringify(mappedResult)
+      );
+
+      return mappedResult;
+    }
   }
 
   // get note id
@@ -65,6 +81,8 @@ class NotesService {
       throw new InvariantError("Catatan gagal ditambahkan");
     }
 
+    await this._cacheService.delete(`notes:${owner}`);
+
     return result.rows[0].id;
   }
 
@@ -82,6 +100,9 @@ class NotesService {
     if (!result.rows.length) {
       throw new NotFoundError("Gagal memperbarui catatan. Id tidak ditemukan");
     }
+
+    const { owner } = result.rows[0];
+    await this._cacheService.delete(`notes:${owner}`);
   }
 
   // delete note by id
@@ -96,6 +117,9 @@ class NotesService {
     if (!result.rows.length) {
       throw new NotFoundError("Gagal menghapus catatan. Id tidak ditemukan");
     }
+
+    const { owner } = result.rows[0];
+    await this._cacheService.delete(`notes:${owner}`);
   }
 
   // verify note owner
